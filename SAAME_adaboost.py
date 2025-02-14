@@ -80,7 +80,22 @@ class SAMME_Adaboost:
         for m in range(1, self.n_rounds + 1):
             # 1. Create and train a new weak learner on full data with sample_weight=w
             model = self.base_learner_factory()
-            model.fit(X_train, y_train, sample_weight=w)
+            if m==1:
+                    # Generate random indices for 10% of the training data
+                    sample_size = int(0.1 * X_train.shape[0])
+                    sampled_indices = np.random.choice(X_train.shape[0], sample_size, replace=False)
+
+                    # Select the subset of data
+                    X_train_sample = X_train[sampled_indices]
+                    y_train_sample = y_train[sampled_indices]
+
+                    # Fit the model on the 10% subset for a weak learner
+                    model.fit(X_train_sample, y_train_sample)
+            else:
+                model.fit(X_train, y_train,sample_weight=w)
+                
+               
+           
 
             # 2. Compute weighted error
             y_pred_train = model.predict(X_train)
@@ -108,6 +123,7 @@ class SAMME_Adaboost:
             self.iterations.append(m)
 
             # 5. Track metrics on training
+            y_pred_train = self.predict(X_train)
             train_accuracy = np.mean(y_pred_train == y_train)
             self.train_accuracies.append(train_accuracy)
             self.train_losses.append(err_m)  # Weighted training error
@@ -150,7 +166,7 @@ class SAMME_Adaboost:
         plt.figure(figsize=(12, 5))
 
         # 1) Accuracy subplot
-        plt.subplot(1, 2, 1)
+        # plt.subplot(1, 2, 1)
         plt.plot(self.iterations, self.train_accuracies, marker="o", color="blue", label="Train Accuracy")
         if self.validation_accuracies:
             plt.plot(self.iterations, self.validation_accuracies, marker="s", color="green", label="Val Accuracy")
@@ -161,15 +177,15 @@ class SAMME_Adaboost:
         plt.legend()
 
         # 2) Weighted training error subplot
-        plt.subplot(1, 2, 2)
-        plt.plot(self.iterations, self.train_losses, marker="o", color="red", label="Weighted Train Error")
-        if self.validation_losses:
-            plt.plot(self.iterations, self.validation_losses, marker="s", color="orange", label="Val Error")
-        plt.xlabel("Rounds")
-        plt.ylabel("Error")
-        plt.title("Training / Validation Error")
-        plt.grid(True)
-        plt.legend()
+        # plt.subplot(1, 2, 2)
+        # plt.plot(self.iterations, self.train_losses, marker="o", color="red", label="Weighted Train Error")
+        # if self.validation_losses:
+        #     plt.plot(self.iterations, self.validation_losses, marker="s", color="orange", label="Val Error")
+        # plt.xlabel("Rounds")
+        # plt.ylabel("Error")
+        # plt.title("Training / Validation Error")
+        # plt.grid(True)
+        # plt.legend()
 
         plt.tight_layout()
         plt.show()
